@@ -1,0 +1,4 @@
+roku>=4.0
+requests>=2.0
+# The script works without these (pure stdlib urllib version).
+# Install for nicer high-level API and future web dashboard experiments.

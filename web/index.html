@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Status • TV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .machine-card { transition: all 0.2s; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+        .offline { background: #ef4444; }
+        .section-title { font-size: 1.1rem; letter-spacing: -.5px; }
+        .big-text { font-size: 1.35rem; line-height: 1.2; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white p-6">
+    <div class="max-w-[1280px] mx-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-end mb-6">
+            <div>
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-server text-4xl text-emerald-400"></i>
+                    <h1 class="text-5xl font-semibold tracking-tighter">FLEET STATUS</h1>
+                </div>
+                <p class="text-zinc-400 mt-1 text-lg">Machines &amp; Peers • Office TV</p>
+            </div>
+            <div class="text-right">
+                <div id="last-updated" class="text-emerald-400 font-mono text-sm">LIVE</div>
+                <div id="current-time" class="text-2xl font-semibold tabular-nums"></div>
+            </div>
+        </div>
+
+        <!-- Machines Section -->
+        <div class="mb-8">
+            <div class="flex items-center gap-2 mb-3 px-1">
+                <i class="fa-solid fa-desktop text-emerald-400"></i>
+                <h2 class="section-title font-semibold text-emerald-400">FLEET MACHINES</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="machines-grid">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Peers Section -->
+        <div>
+            <div class="flex items-center gap-2 mb-3 px-1">
+                <i class="fa-solid fa-users text-sky-400"></i>
+                <h2 class="section-title font-semibold text-sky-400">CLAUDE PEERS ONLINE</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="peers-grid">
+                <!-- Populated by JS -->
+            </div>
+            
+            <div class="mt-3 text-xs text-zinc-500 px-1">
+                Peers discovered via claude-peers MCP. Self included.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Known fleet machines (from context + current data)
+        let machines = [
+            {
+                name: "Mac (this one)",
+                hostname: "MacBook-Air.local",
+                user: "wesleyhines",
+                ip: "100.68.110.67",
+                status: "online",
+                uptime: "10 days",
+                load: "3.39 3.49 3.22",
+                os: "macOS 15.7.7",
+                location: "Office",
+                lastCheck: "just now"
+            },
+            {
+                name: "PC (hinesy-pc)",
+                hostname: "WES",
+                user: "wes",
+                ip: "— (no 100. IP detected)",
+                status: "online",
+                uptime: "recent (SSH OK)",
+                load: "—",
+                os: "Windows",
+                location: "Office",
+                lastCheck: "just now"
+            },
+            {
+                name: "iMac (theoldone)",
+                hostname: "theoldone",
+                user: "hinescreative",
+                ip: "100.?? (not checked)",
+                status: "unknown",
+                uptime: "—",
+                load: "—",
+                os: "macOS",
+                location: "Office",
+                lastCheck: "—"
+            },
+            {
+                name: "Clarvis (M1)",
+                hostname: "clarvis",
+                user: "clarvis",
+                ip: "100.75.153.73",
+                status: "unknown",
+                uptime: "—",
+                load: "—",
+                os: "macOS",
+                location: "Remote",
+                lastCheck: "—"
+            },
+            {
+                name: "Fleet-node",
+                hostname: "fleet-node",
+                user: "—",
+                ip: "100.69.233.7",
+                status: "unknown",
+                uptime: "—",
+                load: "—",
+                os: "Linux?",
+                location: "Cheesegrater",
+                lastCheck: "—"
+            }
+        ];
+
+        let peers = []; // populated from MCP / placeholder
+
+        function updateTime() {
+            const el = document.getElementById('current-time');
+            const now = new Date();
+            el.textContent = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
+        function renderMachines() {
+            const grid = document.getElementById('machines-grid');
+            grid.innerHTML = '';
+            
+            machines.forEach(m => {
+                const card = document.createElement('div');
+                const statusClass = m.status === 'online' ? 'bg-emerald-500/10 border-emerald-500/30' : 
+                                    m.status === 'unknown' ? 'bg-amber-500/10 border-amber-500/30' : 
+                                    'bg-zinc-800 border-zinc-700';
+                
+                card.className = `machine-card ${statusClass} border rounded-2xl p-5`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-semibold text-xl">${m.name}</div>
+                            <div class="text-xs text-zinc-400 mt-0.5">${m.hostname} • ${m.user}</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="status-dot ${m.status === 'online' ? 'online' : 'offline'} inline-block align-middle"></span>
+                            <span class="text-xs ml-1.5 font-medium ${m.status === 'online' ? 'text-emerald-400' : 'text-amber-400'}">${m.status.toUpperCase()}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 grid grid-cols-2 gap-y-3 text-sm">
+                        <div>
+                            <div class="text-[10px] text-zinc-400">IP / TAILSCALE</div>
+                            <div class="font-mono text-emerald-300">${m.ip}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-zinc-400">UPTIME</div>
+                            <div class="font-medium">${m.uptime}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-zinc-400">OS</div>
+                            <div class="font-medium">${m.os}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-zinc-400">LOCATION</div>
+                            <div class="font-medium">${m.location}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 pt-3 border-t border-white/10 text-xs text-zinc-400 flex justify-between">
+                        <span>Load: ${m.load}</span>
+                        <span class="text-zinc-500">${m.lastCheck}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderPeers() {
+            const grid = document.getElementById('peers-grid');
+            grid.innerHTML = '';
+            
+            if (peers.length === 0) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center';
+                placeholder.innerHTML = `
+                    <div class="text-zinc-400">No peers discovered yet.</div>
+                    <div class="text-xs mt-1 text-zinc-500">Run list_peers in a Claude session or check claude-peers MCP.</div>
+                `;
+                grid.appendChild(placeholder);
+                return;
+            }
+            
+            peers.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'bg-zinc-900 border border-zinc-800 rounded-2xl p-5';
+                card.innerHTML = `
+                    <div class="flex justify-between">
+                        <div>
+                            <div class="font-semibold">${p.nickname || p.id.substring(0,8)}</div>
+                            <div class="text-xs text-sky-300 font-mono">${p.machine || 'unknown machine'}</div>
+                        </div>
+                        <span class="status-dot online inline-block align-middle mt-1"></span>
+                    </div>
+                    
+                    <div class="mt-3 text-sm text-zinc-300">
+                        <div><span class="text-zinc-400">CWD:</span> ${p.cwd || '—'}</div>
+                        <div class="mt-1 line-clamp-2"><span class="text-zinc-400">Summary:</span> ${p.summary || 'No summary set'}</div>
+                    </div>
+                    
+                    <div class="mt-2 text-[10px] text-zinc-500">ID: ${p.id}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function updateLastUpdated() {
+            document.getElementById('last-updated').textContent = 'UPDATED ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        }
+
+        // Simulate / placeholder peer data for now (in real use, replace with actual MCP data)
+        function loadPeers() {
+            // In a real setup this would come from claude-peers__list_peers
+            // For now, show self + note
+            peers = [
+                {
+                    id: "self-mac-001",
+                    nickname: "mac-main",
+                    machine: "MacBook-Air.local",
+                    cwd: "/Users/wesleyhines",
+                    summary: "Building fleet dashboard for Roku TV + peer monitoring."
+                }
+            ];
+            // If you run list_peers in another session it can send data here later
+            renderPeers();
+        }
+
+        function refreshAll() {
+            // Re-render with latest (in future: fetch from backend or MCP)
+            renderMachines();
+            renderPeers();
+            updateLastUpdated();
+        }
+
+        // Boot
+        function init() {
+            updateTime();
+            setInterval(updateTime, 30000);
+            
+            // Load machines (static for now, can be made dynamic)
+            renderMachines();
+            
+            // Peers
+            loadPeers();
+            
+            updateLastUpdated();
+            
+            // Auto refresh every 60s
+            setInterval(refreshAll, 60000);
+            
+            // Keyboard hint
+            console.log('%c[Fleet TV] Press R to refresh. This page is mirrored to the Roku.', 'color:#666');
+        }
+        
+        // Allow manual refresh from keyboard when mirrored
+        document.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'r') {
+                refreshAll();
+            }
+        });
+        
+        init();
+    </script>
+</body>
+</html>
