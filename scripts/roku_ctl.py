@@ -305,7 +305,7 @@ def main():
         if args.cast:
             print("\n[CAST] Now start screen mirroring / AirPlay from your PC or Mac to this Roku.")
             print("       Open the fleet dashboard web page and mirror the tab/window.")
-            print("       Run the web server if needed: cd ~/roku-experiments/fleet-dashboard-web && python3 -m http.server 8080")
+            print("       Run the web server if needed: cd ~/Work/active-projects/fleet-roku-dashboard/fleet-dashboard-web && python3 -m http.server 8080")
         print("\nTV is ready for the extended dashboard. Use other commands to control further.")
     elif args.cmd == "interactive":
         interactive(ip)

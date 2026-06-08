@@ -1,5 +1,5 @@
 #!/bin/zsh
-cd ~/roku-experiments
+cd ~/Work/active-projects/fleet-roku-dashboard
 ./fleet
 # The fleet script already starts the server and preps the TV.
 # After this, the user still needs to manually start Screen Mirroring on the Mac to the Roku.

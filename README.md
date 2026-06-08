@@ -1,48 +1,85 @@
 # Fleet Roku Dashboard
 
-Simple one-click (or one double-click) setup to display a live fleet status dashboard on your Roku TV as an extended screen.
+A simple setup to display a live "fleet status" dashboard (machines + Claude peers) on a Roku TV as an extended screen via Screen Mirroring / AirPlay.
 
-## What it shows
-- Fleet machines (Mac, PC, iMac, Clarvis, fleet-node, etc.) with status, Tailscale IPs, uptime, load, etc.
-- Online Claude peers from the mesh (with machine, CWD, and current summary of what each peer is working on).
+## Goal
+- Show status of fleet machines (Mac, PC, iMac, Clarvis, fleet-node, etc.) and online Claude peers (from claude-peers MCP mesh).
+- One-click (double-click) to start.
+- Clickable GUI for TV controls.
+- Dashboard lives in browser on your Mac, mirrored to the big TV.
 
-## Super simple usage (no terminal after first setup)
+## Quick Start (Super Simple)
+1. **Double-click** `Start-Fleet-Dashboard.command` (on Desktop or in this folder).
+   - Starts local web server.
+   - Preps the Roku TV (sends to Home, etc.).
+2. Open the browser to the URL it provides (usually http://localhost:8080).
+3. On your Mac: **Control Center → Screen Mirroring → select your Roku TV**.
+4. Mirror the browser tab (or full screen) to the TV.
 
-1. **Double-click** `Start-Fleet-Dashboard.command` on your Desktop (or in this folder).
-   - This starts the local web server and preps the Roku TV.
-2. Open the browser page it gives you (http://localhost:8080).
-3. On your Mac: Control Center → Screen Mirroring → select your Roku TV.
-4. Mirror the tab (or full screen). The fleet/peers dashboard appears on the TV.
+The dashboard should now be on the TV showing fleet machines and peers.
 
-## Bonus: Clickable GUI
-Run `python3 fleet_gui.py` (or double-click the Desktop command) to get a window with big buttons for:
-- Starting the dashboard
-- Sending Home, launching Plex/YouTube, switching inputs (Xbox etc.), volume, status, etc.
+## Files / Structure
+- `Start-Fleet-Dashboard.command` - The main "button". Double-click this.
+- `scripts/`
+  - `fleet` - Shell script that starts server + preps TV.
+  - `fleet_gui.py` - Tkinter GUI with big clickable buttons (recommended for daily use).
+  - `roku_ctl.py` - Low-level Roku control (ECP).
+- `web/` - The actual dashboard (index.html). Edit this to customize what shows on TV.
+- `roku-native/` - Optional native Roku channel starter (not used in current mirroring setup).
+- `README.md`, `requirements.txt`
 
-## Files
-- `fleet` – main shell launcher
-- `fleet_gui.py` – Tkinter GUI with clickable buttons (no terminal needed for daily use)
-- `fleet-dashboard-web/` – the actual dashboard HTML (fleet machines + peers view)
-- `roku_ctl.py` – Roku ECP control script
-- `fleet-dashboard/` – optional native Roku channel starter (if you ever want to sideload instead of mirroring)
-- `Start-Fleet-Dashboard.command` – the Desktop "button" (double-click this)
+## Running the GUI (Click Buttons)
+```bash
+cd ~/Work/active-projects/fleet-roku-dashboard
+python3 scripts/fleet_gui.py
+```
+This opens a window with buttons to start the dashboard, send keys to TV, launch apps, etc. No terminal typing needed after launch.
+
+## Updating the Dashboard
+Edit `web/index.html`. It's a self-contained HTML/JS page (uses Tailwind CDN).
+Refresh the mirrored browser tab to see changes on TV.
+
+Current content focuses on:
+- Fleet machines (status, IPs, uptime, etc.)
+- Claude peers online (with summaries from the mesh)
+
+## TV Control
+While dashboard is mirrored, you can still control the TV:
+- Use the GUI buttons.
+- Or from terminal (in project dir):
+  ```bash
+  python3 scripts/roku_ctl.py --ip 10.0.0.73 fleet
+  python3 scripts/roku_ctl.py --ip 10.0.0.73 press Home
+  python3 scripts/roku_ctl.py --ip 10.0.0.73 launch Plex
+  ```
+
+## Notes / Gotchas
+- **Mirroring is manual** on the Mac side (Control Center). This is how Roku extended screen works.
+- TV IP is currently hardcoded as `10.0.0.73` in scripts/. Update if it changes.
+- Server runs on port 8080. Change if needed.
+- Nothing is installed on the Roku itself — it's pure mirroring.
+- The native channel in `roku-native/` is experimental (for future sideload instead of mirroring).
+- Logs: `/tmp/fleet_dash.log`
+
+## Resuming Later
+1. Double-click `Start-Fleet-Dashboard.command` (or run the GUI).
+2. Mirror as above.
+3. Edit `web/index.html` for changes.
 
 ## Requirements
-- macOS (the mirroring part)
-- Python 3 (with tkinter, usually included)
-- Your Roku TV on the same network with Screen Mirroring enabled
-- (Optional) The `roku` Python package for nicer control: `pip3 install -r requirements.txt`
+- macOS (for easy Screen Mirroring)
+- Python 3 (Tkinter usually included)
+- Roku TV on same network with Screen Mirroring enabled
+- (Optional) `pip3 install -r requirements.txt` for better Roku lib
 
-## How to update the dashboard
-Edit `fleet-dashboard-web/index.html` (it's just HTML/JS with Tailwind). Refresh the mirrored tab.
+## GitHub
+https://github.com/hinescreative/fleet-roku-dashboard
 
-## TV controls from the GUI or script
-While the dashboard is mirrored you can still control the TV:
-- Use the GUI buttons
-- Or from terminal: `python3 roku_ctl.py --ip YOUR_ROKU_IP fleet --cast`
+## To Do / Future
+- Make IP configurable (env var or config file)
+- Live polling for machine/peer status (instead of snapshot)
+- Better error handling in GUI
+- Auto-start server on login?
+- Package as real macOS .app?
 
-## Notes
-- This uses local web serving + Mac Screen Mirroring / AirPlay. Nothing is installed on the Roku itself.
-- The native channel folder is included for future experiments but the mirroring route is currently the simplest.
-
-Created for Wes's fleet monitoring on the big screen.
+Created for easy fleet visibility on the big screen.

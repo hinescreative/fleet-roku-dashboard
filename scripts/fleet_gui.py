@@ -21,8 +21,8 @@ import socket
 
 # === CONFIG - change if needed ===
 ROKU_IP = "10.0.0.73"
-CTL_SCRIPT = os.path.expanduser("~/roku-experiments/roku_ctl.py")
-DASH_DIR = os.path.expanduser("~/roku-experiments/fleet-dashboard-web")
+CTL_SCRIPT = os.path.expanduser("~/Work/active-projects/fleet-roku-dashboard/roku_ctl.py")
+DASH_DIR = os.path.expanduser("~/Work/active-projects/fleet-roku-dashboard/fleet-dashboard-web")
 DASH_PORT = 8080
 DASH_URL = f"http://localhost:{DASH_PORT}"
 
